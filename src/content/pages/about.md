@@ -11,8 +11,8 @@ stop being useful? The answer keeps moving, which is the interesting part.
 
 ## What I'm building
 
-- **Mentes** — a second brain and an agentic experimentation platform, built _in_
-  itself, _using_ itself. The hub everything else plugs into.
+- A **second brain platform** — part knowledge store, part agentic experimentation
+  ground, built _in_ itself, _using_ itself. The hub everything else plugs into.
 - **Folio** — a Markdown reader for macOS and iOS, built read-first on the premise that
   agents now write most of my documents and I mostly read them.
 - **Recall** — search across past Claude Code and Codex sessions to find the one you're
