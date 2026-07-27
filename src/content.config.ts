@@ -34,4 +34,22 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, pages };
+const projects = defineCollection({
+  loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: "./src/content/projects" }),
+  schema: z.object({
+    title: z.string(),
+    tagline: z.string(),
+    description: z.string(),
+    repo: z.url(),
+    language: z.string(),
+    status: z.enum(["active", "early", "experiment"]).default("active"),
+    install: z.string().optional(),
+    website: z.url().optional(),
+    order: z.number().default(100),
+    draft: z.boolean().optional(),
+    ogImage: z.string().optional(),
+    canonicalURL: z.string().optional(),
+  }),
+});
+
+export const collections = { posts, pages, projects };

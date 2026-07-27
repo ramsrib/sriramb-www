@@ -1,0 +1,26 @@
+---
+type Props = {
+  language: string;
+  status: "active" | "early" | "experiment";
+  class?: string;
+};
+
+const { language, status, class: className } = Astro.props;
+
+const statusLabel: Record<Props["status"], string> = {
+  active: "Actively developed",
+  early: "Early",
+  experiment: "Experiment",
+};
+---
+
+<div
+  class:list={[
+    "text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm",
+    className,
+  ]}
+>
+  <span>{language}</span>
+  <span aria-hidden="true">&middot;</span>
+  <span>{statusLabel[status]}</span>
+</div>
