@@ -23,6 +23,8 @@ stop being useful? The answer keeps moving, which is the interesting part.
 Plus a drawer of smaller things: a timezone converter in the menu bar, a way to send
 documents to a Kindle, and more shell aliases than I'd care to defend.
 
+The full list, with what each one is for, lives on the [projects](/projects) page.
+
 ## Elsewhere
 
 - [GitHub](https://github.com/ramsrib)
