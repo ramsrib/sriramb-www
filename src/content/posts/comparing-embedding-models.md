@@ -2,7 +2,7 @@
 title: "How we compared two embedding models"
 description: "What it takes to measure whether one embedding model retrieves better than another, worked through on a real comparison of bge-m3 and qwen3-embedding."
 pubDatetime: 2026-09-12T09:00:00-07:00
-draft: true
+draft: false
 tags: ["embeddings", "search", "evaluation"]
 ---
 
