@@ -1,29 +1,28 @@
 ---
-title: "Tried a new embedding model in recall. Couldn't tell if it was better."
-description: "A drop-in model showed up for recall. Swapping it was trivial. Finding out if it was actually better meant writing my own answer key, and catching my own benchmark cheating."
+title: "recall finds your old Claude Code sessions with a local embedding model. Picking which one was the hard part."
+description: "recall searches your Claude Code and Codex sessions locally, with an embedding model. A newer drop-in model showed up, and finding out whether it was actually better meant writing my own answer key and catching my own benchmark cheating."
 pubDatetime: 2026-09-12T09:00:00-07:00
-modDatetime: 2026-09-12T15:10:00-07:00
+modDatetime: 2026-09-12T15:20:00-07:00
 draft: false
-tags: ["embeddings", "search", "evaluation"]
+tags: ["recall", "embeddings", "claude-code"]
 ---
 
-A new embedding model showed up that was a drop-in for recall. Same 1024 dimensions as the
-one I was using, newer architecture, smaller on disk. Switching would be a re-index and
-nothing else. The only question was whether it was actually better, and I figured that
-would be the easy part.
+[recall](https://github.com/ramsrib/recall-cli) searches your old Claude Code and Codex
+sessions. You type something like "that time we argued about sqlite vs a vector db" and it
+finds the session, even though those exact words probably aren't in the transcript. It does
+that with a local embedding model: text goes in, a vector comes out, and things that *mean*
+the same thing land near each other whether or not they share any words.
+
+A newer embedding model showed up that was a drop-in. Same 1024 dimensions as the one I was
+using, newer architecture, smaller on disk. Switching would be a re-index and nothing else.
+The only question was whether it was actually better, and I figured that would be the easy
+part.
 
 It was not the easy part.
 
 ## The obvious way to check is worthless
 
-[recall](https://github.com/ramsrib/recall-cli) searches your old Claude Code and Codex
-sessions. You type something like "that time we argued about sqlite vs a vector db" and
-it's supposed to find the session, even though those exact words probably aren't in the
-transcript. That's the embedding model's job: turn text into a vector so that things that
-*mean* the same thing land near each other, whether or not they share any words.
-
-So how do you know if a new model does that better? The obvious move is to run a few
-searches with each and look. I did this. It looked fine. It also looked fine with the old
+The obvious move is to run a few searches with each model and look. I did this. It looked fine. It also looked fine with the old
 one. That's the problem with looking: you pick queries you already know the answer to, you
 see what you expect to see, and the differences that actually separate two decent models
 are too small to notice by eye. "Feels better" isn't a measurement.
