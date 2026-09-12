@@ -1,8 +1,8 @@
 ---
-title: "recall finds your old Claude Code sessions with a local embedding model. Picking which one was the hard part."
+title: "Recalling is harder than I thought: qwen3 vs bge-m3"
 description: "recall searches your Claude Code and Codex sessions locally, with an embedding model. A newer drop-in model showed up, and finding out whether it was actually better meant writing my own answer key and catching my own benchmark cheating."
 pubDatetime: 2026-09-12T09:00:00-07:00
-modDatetime: 2026-09-12T15:20:00-07:00
+modDatetime: 2026-09-12T15:45:00-07:00
 draft: false
 tags: ["recall", "embeddings", "claude-code"]
 ---
