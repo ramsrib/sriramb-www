@@ -1,20 +1,29 @@
 ---
-title: "How we compared two embedding models"
-description: "What it takes to measure whether one embedding model retrieves better than another, worked through on a real comparison of bge-m3 and qwen3-embedding."
+title: "Swapping the embedding model was easy. Knowing if it helped was not."
+description: "I switched recall's embedding model and had no way to tell if search got better. Every cheap way to check lies to you, so I had to write the answer key myself."
 pubDatetime: 2026-09-12T09:00:00-07:00
+modDatetime: 2026-09-12T14:30:00-07:00
 draft: false
 tags: ["embeddings", "search", "evaluation"]
 ---
 
-This explains, from scratch, how search-by-meaning works, why the embedding model matters,
-and how you measure which of two models is better. No prior ML background assumed.
+I switched recall's embedding model, and then realized I had no idea whether search had
+actually gotten better.
 
-If you only want the numbers and the method, they live in
-[recall's repo](https://github.com/ramsrib/recall-cli/blob/main/docs/embedding-models.md).
-Read this if you want to understand *why* that's the right way to compare, and what the
-metrics mean.
+Swapping it is nothing. Both models spit out 1024 numbers, so it's a re-index and you're
+done. Knowing whether the swap *helped* is the whole problem. Running a few searches and
+eyeballing the results just tells you what you already believed. The query log can't help
+either, because grading a model against the results it returned is circular. And the first
+version of my comparison was quietly feeding one model the other one's prompt format, which
+would have crowned the wrong winner without anyone noticing.
 
-## 1. What problem are we solving?
+What you actually need is an answer key, and on a private corpus nobody is going to write
+it for you.
+
+This is how I built one. If you just want the numbers, they're in
+[the repo](https://github.com/ramsrib/recall-cli/blob/main/docs/embedding-models.md).
+
+## 1. What I'm actually trying to do
 
 [recall](https://github.com/ramsrib/recall-cli) searches your past Claude Code and Codex
 sessions. You type a question in plain English:
@@ -23,8 +32,8 @@ sessions. You type a question in plain English:
 
 and it should return the *session where you actually discussed that*, even though you
 didn't type the exact words that appear in the transcript. That last part is the hard bit.
-A plain keyword search (`grep`) only finds documents containing your literal words. We want
-**meaning-based** search. That's what an *embedding model* gives us.
+A plain keyword search (`grep`) only finds documents containing your literal words. I want
+**meaning-based** search. That's what an *embedding model* gives you.
 
 ## 2. What is an embedding? (the one concept to understand)
 
@@ -59,11 +68,11 @@ So search works like this:
 The embedding model is the thing that produces these vectors. **A better model produces
 vectors where "close = actually relevant" holds more reliably.** Two models can both output
 1024 numbers but disagree about what's close to what, so one can be better at finding the
-right session. That's exactly what we want to measure.
+right session. That's exactly what I want to measure.
 
 ### A note on "1024 dimensions"
 
-The vector has 1024 numbers, so we say it's **1024-dimensional**. Both models we compared
+The vector has 1024 numbers, so it's **1024-dimensional**. Both models I compared
 output 1024 numbers, which matters practically: the storage size and the math cost are
 identical, so any difference is purely *quality*, not *cost*. (A model that output 4096
 numbers would be 4x the storage and slower to compare.)
@@ -86,7 +95,7 @@ apples-to-apples.
 
 To score "how good is search," you need three things:
 
-1. **A corpus**, the documents being searched. We have this: ~213 sessions, ~11k chunks.
+1. **A corpus**, the documents being searched. I have this: ~213 sessions, ~11k chunks.
 2. **A set of queries**, realistic questions someone would actually type.
 3. **Ground truth** (a.k.a. "gold labels"): *for each query, which session is the right
    answer?*
@@ -95,8 +104,8 @@ The third one is the crux and the hard part. To grade an exam you need the answe
 the answer key is: "when I search for *X*, the correct session is *this one*." Without it,
 you have no way to say a model got it "right."
 
-**How we built ground truth:** we have a rare advantage, in that it's *your own* history, so
-we know what's in it. We picked ~22 specific sessions with distinctive topics, and for each
+**How I built ground truth:** I have a rare advantage, in that it's *my own* history, so
+I know what's in it. I picked ~22 specific sessions with distinctive topics, and for each
 one wrote a natural-language query that it should answer, recording that session's ID as the
 gold answer. The result is
 [`eval/fixture.json`](https://github.com/ramsrib/recall-cli/blob/main/eval/fixture.json):
@@ -105,7 +114,7 @@ gold answer. The result is
 { "query": "fixing a rust cargo metadata failure when compiling for iOS", "gold": ["9b822ad0"] }
 ```
 
-This says: *"if you search that query, session `9b822ad0` is a correct answer."* We
+This says: *"if you search that query, session `9b822ad0` is a correct answer."* I
 deliberately **paraphrased**. The query says "rust cargo metadata failure," the session title
 says "Fix cargo metadata error in iOS build." Different words, same meaning. That forces the
 test to measure *semantic* matching, not keyword overlap (which would be too easy and
@@ -116,7 +125,7 @@ archiving a chat, say), so `gold` is a list, and a hit on *any* of them counts.
 
 ### Real queries help with realism, not labels
 
-A natural thought: "recall now logs every search, so can't we just eval on *real* queries
+A natural thought: "recall now logs every search, so can't I just eval on *real* queries
 instead of invented ones?" Partly. Real queries fix ingredient #2, since they're
 representative and unbiased, with no risk of phrasing that secretly favors one model. But
 they do **nothing** for ingredient #3: a logged query has no answer key attached. You still
@@ -147,7 +156,7 @@ Run a query, get back a **ranked list** of sessions. #1 is the model's best gues
 and so on. The metrics all ask variations of: *where in that list did the right answer show
 up?*
 
-Say for one query the right answer (gold) came back at **position 3**. We say its **rank = 3**.
+Say for one query the right answer (gold) came back at **position 3**. Its **rank = 3**.
 
 ### Recall@k, or "did it make the top k?"
 
@@ -167,7 +176,7 @@ Why several values of *k*? They answer different real questions:
   when you want the answer without scanning.
 - **Recall@10** matters when a human will glance down a list anyway.
 
-> **Our key finding read through this lens:** the two models had **identical Recall@5 and
+> **My key finding read through this lens:** the two models had **identical Recall@5 and
 > @10**. Both put the right session in the top 5 equally often. But qwen3 had **higher
 > Recall@1**, meaning it more often nailed the *exact* first spot. So they're equally good at
 > "is it in the shortlist," and qwen3 is better at "is it #1."
@@ -196,17 +205,17 @@ and rank 2 (1.00 vs 0.50 is a big drop). So **MRR going up means answers are mov
 the top of the list**, which is why qwen3's higher MRR (0.87 vs 0.79) lines up with its
 higher Recall@1.
 
-### nDCG, the more sophisticated cousin (we didn't run it)
+### nDCG, the more sophisticated cousin (I didn't run it)
 
 **nDCG** handles the case where some answers are "perfect," some "partially relevant," and
 you want to reward putting the *most* relevant ones highest. It needs **graded** labels
-(relevance 0/1/2/3), not just yes/no. Our fixture only has binary gold (right or not right),
+(relevance 0/1/2/3), not just yes/no. My fixture only has binary gold (right or not right),
 so MRR and Recall@k are the right tools and nDCG would add nothing here. It's on the "to make
 this conclusive" list for later.
 
 ### Quality isn't everything, so also measure cost
 
-A model can rank better but be impractical. So we also measured:
+A model can rank better but be impractical. So I also measured:
 
 - **Indexing throughput**, chunks embedded per second, which sets how long a re-index takes.
   qwen3 was ~2x slower here.
@@ -230,7 +239,7 @@ specific format:
 If you feed qwen3 the bge-style prefix, you're using it "wrong" and it scores worse, so a
 naive comparison would unfairly punish it. An earlier version of recall hardcoded the bge
 prefixes for every model, which would have under-sold qwen3 in any head-to-head. **Before
-comparing, we fixed that so each model got its own recipe.**
+comparing, I fixed that so each model got its own recipe.**
 
 The lesson generalizes: *a fair benchmark gives each contender its best conditions.*
 
@@ -258,7 +267,7 @@ Putting it all together, the moving parts:
 
 Two details that make it trustworthy:
 
-1. **Same corpus, two separate indexes.** We embedded *the exact same sessions* once with
+1. **Same corpus, two separate indexes.** I embedded *the exact same sessions* once with
    each model into two separate databases, built under separate `$HOME`s with symlinks back
    to the same session files. That way both indexes covered identical content and neither
    disturbed the other. (Comparing across models *inside* one index would be meaningless
@@ -266,14 +275,14 @@ Two details that make it trustworthy:
 2. **It drives the real `recall` binary**, not a reimplementation. The eval measures what
    you'd actually experience, including the hybrid ranking logic.
 
-We ran it in two **modes**:
+I ran it in two **modes**:
 
 - **semantic**, pure embedding similarity. This isolates the embedding model, which is what
-  we're testing.
+  I'm testing.
 - **hybrid**, embeddings blended with keyword (BM25) search. Closer to real default usage,
   but it partly hides the embedding difference because keywords carry some of the load.
 
-We report both, so you can see the model's raw effect *and* its real-world effect.
+I report both, so you can see the model's raw effect *and* its real-world effect.
 
 ## 8. How to read the actual results
 
@@ -299,22 +308,22 @@ Reading it in English:
 
 Conclusion: **qwen3 orders the top of the list better.** Since both an agent and a human care
 most about the first result, that's a real, relevant win, bought with a slower one-time
-re-index. We switched the default.
+re-index. I switched the default.
 
 ## 9. What makes an eval *trustworthy* (and where ours is weak)
 
 Be honest about limits. A benchmark is only as good as its setup.
 
-- **Sample size.** We used 22 queries. The Recall@1 gap (0.82 vs 0.73) is **about 2 queries
+- **Sample size.** I used 22 queries. The Recall@1 gap (0.82 vs 0.73) is **about 2 queries
   flipping**. With so few queries, some of that could be luck. More queries (50 to 100) would
-  mean more confidence. *This is our biggest weakness.*
+  mean more confidence. *This is the biggest weakness.*
 - **Who wrote the queries.** Claude wrote them from session content. Real queries *you* type
   would be less biased, since there's a risk the phrasing subtly favors one model. The gold
   standard is queries collected "in the wild," labeled by someone who didn't see the models'
   outputs (**blind** labeling).
 - **Statistical significance.** With small N, you'd ideally run a significance test to check
-  the gap isn't noise. We didn't, so we call the result "suggestive," not "proven."
-- **Did we give *both* models their best shot?** We gave qwen3 its proper recipe but left
+  the gap isn't noise. I didn't, so I call the result "suggestive," not "proven."
+- **Did I give *both* models their best shot?** I gave qwen3 its proper recipe but left
   bge-m3 on its shipped prefixes. bge *might* do better bare. A truly fair fight tunes both.
 
 There's one more limitation worth stating plainly: **the scores above are not independently
