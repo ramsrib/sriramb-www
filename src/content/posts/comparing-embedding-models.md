@@ -1,8 +1,8 @@
 ---
-title: "Is the new embedding model better? Harder question than it sounds."
+title: "Tried a new embedding model in recall. Couldn't tell if it was better."
 description: "A drop-in model showed up for recall. Swapping it was trivial. Finding out if it was actually better meant writing my own answer key, and catching my own benchmark cheating."
 pubDatetime: 2026-09-12T09:00:00-07:00
-modDatetime: 2026-09-12T14:45:00-07:00
+modDatetime: 2026-09-12T15:10:00-07:00
 draft: false
 tags: ["embeddings", "search", "evaluation"]
 ---
