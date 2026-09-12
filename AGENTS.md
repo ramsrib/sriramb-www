@@ -7,12 +7,20 @@ Sriram's personal site (`sriramb.com`): Astro 5 + the AstroPaper theme, deployed
 queue of what to write next, and the adaptation method live in the `personal-ops` repo at
 `online/publishing/posts/`. Read those before drafting prose; read this for the mechanics.
 
-## The absolute rule
+## Publish, then iterate
 
-**Never publish without Sriram approving the final text.** Concretely: a new post is committed
-with `draft: true` and stays that way until he says otherwise. Flipping `draft: false` is his
-call, not an agent's. The site is his name and voice; an obviously-AI post on it costs more
-than a missing post does.
+**A finished post ships; don't park it in `draft: true` waiting for approval.** Sriram reviews
+posts live and iterates after (decided 2026-09-12). Publishing here is cheaply reversible: edit
+and push is live in about a minute, and `draft: true` + push removes the post entirely. Use
+`draft: true` while a post is still being written, then flip it and push.
+
+What still isn't an agent's call: deleting a post other people may have linked, changing the
+site's identity (`astro-paper.config.ts`, the About page), and anything touching money or
+sending. When in doubt, the test is whether one push undoes it.
+
+Prose quality is the real risk, not publishing speed. The site carries his name and voice, so
+an adapted post must pass the voice and structure rules in
+`personal-ops/online/publishing/posts/` before it goes out.
 
 ## Content collections
 
@@ -41,7 +49,7 @@ tags: ["embeddings", "search", "evaluation"]
 | `title` | **yes** | string |
 | `description` | **yes** | one sentence. Used for OG/meta, the post card, and RSS. Concrete, no marketing adjectives |
 | `pubDatetime` | **yes** | a real date, parsed as `z.date()`. Include the offset (`-07:00` / `-08:00`) or set `timezone` |
-| `draft` | — | **set `true` on every new post.** Omit or `false` only after approval |
+| `draft` | — | `true` while writing; flip to `false` to publish. Not an approval gate, see above |
 | `tags` | — | defaults to `["others"]`. Reuse existing tags before coining one; each tag generates a page |
 | `modDatetime` | — | set when editing an already-published post; drives "Updated on" |
 | `featured` | — | pins to the featured section on the home page |
@@ -70,9 +78,13 @@ pnpm build         # also runs astro check; catches frontmatter schema errors
 **`pnpm build` is the frontmatter test.** A bad `pubDatetime` or a missing `description` fails
 the build rather than shipping broken. Run it before committing a post.
 
-### Previewing a draft
+### Previewing
 
-**`draft: true` posts 404 in `pnpm dev` too, not just in production.** `src/utils/postFilter.ts`
+`pnpm dev`, then read it at `http://localhost:4321/posts/<slug>/`. Hot reload is on, so
+markdown edits show up immediately. **This is the iteration loop; don't wait on a Vercel
+deploy to look at prose.** A published post needs no flag juggling at all.
+
+**But `draft: true` posts 404 in `pnpm dev` too, not just in production.** `src/utils/postFilter.ts`
 excludes drafts unconditionally; `import.meta.env.DEV` only relaxes the *scheduled-post* check
 (a future `pubDatetime`). So there is no read-only way to see a draft rendered.
 
@@ -85,18 +97,18 @@ sed -i '' 's/^draft: false$/draft: true/' src/content/posts/<slug>.md
 git diff --stat   # confirm the flag is back to true before you commit
 ```
 
-Don't reach for a future `pubDatetime` as a second lock instead: dev bypasses the schedule
-check, and a pushed `draft: false` post would publish *itself* when that date arrives. The
-`draft` flag is the lock.
+Don't reach for a future `pubDatetime` to hide a post instead: dev bypasses the schedule
+check, and a pushed `draft: false` post would publish *itself* when that date arrives.
 
 Search (`pagefind`) indexes at build time, so a new post won't appear in site search until
 after a build.
 
 ## Deploy
 
-Vercel, on push to `main`. There is no staging environment, so **the build must pass locally
-before pushing** — a failed Vercel build leaves the last good deploy up, but a passing build
-with an unapproved post live is the failure that matters.
+Vercel, on push to `main`. There is no staging environment, so **run `pnpm build` locally
+before pushing**; a failed Vercel build just leaves the last good deploy up, but you won't
+know the post was broken. Don't poll the live URL waiting for the deploy to land: hand over
+the link. To take a post back down, set `draft: true` and push.
 
 ## Conventions
 
